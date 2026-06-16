@@ -1,0 +1,12 @@
+# Node
+node_modules
+dist
+
+# .NET
+bin
+obj
+*.user
+
+# misc
+.DS_Store
+*.local

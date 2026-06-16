@@ -1,0 +1,49 @@
+# Pipeline for the React frontend
+# Runs ONLY when files in the /frontend folder change
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - frontend/*
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # If deploying the frontend to Static Web Apps, you use a deployment token instead.
+  # This pipeline shows the build + test; deployment depends on your chosen host.
+  apiUrl: 'https://YOUR-API-APP-SERVICE-NAME.azurewebsites.net'   # <-- your deployed API URL
+
+stages:
+  - stage: BuildAndTest
+    displayName: 'Build and Test Frontend'
+    jobs:
+      - job: build
+        steps:
+          - task: UseNode@1
+            displayName: 'Install Node.js'
+            inputs:
+              version: '20.x'
+
+          - script: npm install
+            displayName: 'Install dependencies'
+            workingDirectory: 'frontend'
+
+          - script: npm test
+            displayName: 'Run tests'
+            workingDirectory: 'frontend'
+
+          - script: npm run build
+            displayName: 'Build (with API URL baked in)'
+            workingDirectory: 'frontend'
+            env:
+              VITE_API_URL: '$(apiUrl)'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish built files'
+            inputs:
+              PathtoPublish: 'frontend/dist'
+              ArtifactName: 'frontend-drop'

@@ -1,0 +1,78 @@
+# Pipeline for the .NET Core API
+# Runs ONLY when files in the /api or /api.tests folders change
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - api/*
+      - api.tests/*
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  azureSubscription: 'Azure-first-connection'    # <-- your service connection
+  apiAppName: 'YOUR-API-APP-SERVICE-NAME'        # <-- create this App Service (Linux, .NET 8)
+  buildConfiguration: 'Release'
+
+stages:
+  - stage: BuildAndTest
+    displayName: 'Build and Test API'
+    jobs:
+      - job: build
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Install .NET 10 SDK'
+            inputs:
+              packageType: 'sdk'
+              version: '10.0.x'
+
+          - script: dotnet restore
+            displayName: 'Restore dependencies'
+            workingDirectory: '$(System.DefaultWorkingDirectory)'
+
+          - script: dotnet build api/api.csproj -c $(buildConfiguration) --no-restore
+            displayName: 'Build API'
+
+          - script: dotnet test api.tests/api.tests.csproj -c $(buildConfiguration)
+            displayName: 'Run tests'
+
+          - script: dotnet publish api/api.csproj -c $(buildConfiguration) -o $(Build.ArtifactStagingDirectory)/publish
+            displayName: 'Publish API'
+
+          - task: ArchiveFiles@2
+            displayName: 'Archive published output'
+            inputs:
+              rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/publish'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/api.zip'
+              replaceExistingArchive: true
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish artifact'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/api.zip'
+              ArtifactName: 'api-drop'
+
+  - stage: Deploy
+    displayName: 'Deploy API to Azure'
+    dependsOn: BuildAndTest
+    condition: succeeded()
+    jobs:
+      - job: deploy
+        steps:
+          - task: DownloadBuildArtifacts@1
+            inputs:
+              artifactName: 'api-drop'
+              downloadPath: '$(System.DefaultWorkingDirectory)'
+
+          - task: AzureWebApp@1
+            displayName: 'Deploy to Azure App Service'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appName: '$(apiAppName)'
+              package: '$(System.DefaultWorkingDirectory)/api-drop/api.zip'
