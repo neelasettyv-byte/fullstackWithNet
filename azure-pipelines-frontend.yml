@@ -15,7 +15,7 @@ pool:
 variables:
   # If deploying the frontend to Static Web Apps, you use a deployment token instead.
   # This pipeline shows the build + test; deployment depends on your chosen host.
-  apiUrl: 'https://YOUR-API-APP-SERVICE-NAME.azurewebsites.net'   # <-- your deployed API URL
+  apiUrl: 'https://fullstack-api-quest-2026-gxebevgkf3d8ddac.westeurope-01.azurewebsites.net'   # <-- your deployed API URL
 
 stages:
   - stage: BuildAndTest

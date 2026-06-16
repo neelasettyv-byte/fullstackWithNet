@@ -15,7 +15,7 @@ pool:
 
 variables:
   azureSubscription: 'Azure-first-connection'    # <-- your service connection
-  apiAppName: 'YOUR-API-APP-SERVICE-NAME'        # <-- create this App Service (Linux, .NET 8)
+  apiAppName: 'fullstack-api-quest-2026'         # <-- your API App Service
   buildConfiguration: 'Release'
 
 stages:
