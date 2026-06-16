@@ -30,9 +30,11 @@ stages:
               packageType: 'sdk'
               version: '10.0.x'
 
-          - script: dotnet restore
-            displayName: 'Restore dependencies'
-            workingDirectory: '$(System.DefaultWorkingDirectory)'
+          - script: dotnet restore api/api.csproj
+            displayName: 'Restore API dependencies'
+
+          - script: dotnet restore api.tests/api.tests.csproj
+            displayName: 'Restore test dependencies'
 
           - script: dotnet build api/api.csproj -c $(buildConfiguration) --no-restore
             displayName: 'Build API'
